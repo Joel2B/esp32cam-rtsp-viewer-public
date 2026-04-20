@@ -1,4 +1,4 @@
-import styles from "@/app/page.module.css";
+import { ui } from "../ui";
 
 interface InspectorCardProps {
   inspectorText: string;
@@ -6,12 +6,12 @@ interface InspectorCardProps {
 
 export function InspectorCard({ inspectorText }: InspectorCardProps) {
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTitleRow}>
-        <h2 className={styles.cardTitle}>Inspector</h2>
-        <span className={styles.cardHint}>Full response from the last action</span>
+    <article className={ui.card}>
+      <div className={ui.cardTitleRow}>
+        <h2 className={ui.cardTitle}>Inspector</h2>
+        <span className={ui.cardHint}>Full response from the last action</span>
       </div>
-      <pre className={styles.inspector}>{inspectorText}</pre>
+      <pre className={ui.inspector}>{inspectorText}</pre>
     </article>
   );
 }

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --bg: #1a1d25;
   --bg-elev: #202632;
@@ -14,8 +16,6 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html,
@@ -37,4 +37,20 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+code,
+pre {
+  font-family: var(--font-mono), "Consolas", monospace;
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

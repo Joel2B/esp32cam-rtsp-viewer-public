@@ -1,6 +1,5 @@
-import styles from "@/app/page.module.css";
-
 import type { OpenDirect, TakeSnapshot, UpdateSetting, ViewerSettings } from "../types";
+import { cx, ui } from "../ui";
 import { formatTime } from "../utils";
 
 interface ViewerCardProps {
@@ -20,7 +19,7 @@ interface ViewerCardProps {
 function EcoStateIcon({ active }: { active: boolean }) {
   if (active) {
     return (
-      <svg viewBox="0 0 20 20" className={styles.quickStatusIcon} aria-hidden="true">
+      <svg viewBox="0 0 20 20" className={ui.quickStatusIcon} aria-hidden="true">
         <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
         <path
           d="M6.3 10.2 8.7 12.5 13.8 7.6"
@@ -35,7 +34,7 @@ function EcoStateIcon({ active }: { active: boolean }) {
   }
 
   return (
-    <svg viewBox="0 0 20 20" className={styles.quickStatusIcon} aria-hidden="true">
+    <svg viewBox="0 0 20 20" className={ui.quickStatusIcon} aria-hidden="true">
       <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
       <path d="M8 7.3v5.4M12 7.3v5.4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
     </svg>
@@ -56,89 +55,85 @@ export function ViewerCard({
   onQuickEcoMode,
 }: ViewerCardProps) {
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTitleRow}>
+    <article className={ui.card}>
+      <div className={ui.cardTitleRow}>
         <div>
-          <h2 className={styles.cardTitle}>Viewer</h2>
-          <p className={styles.cardHint}>Use snapshot poll or MJPEG /stream.</p>
+          <h2 className={ui.cardTitle}>Viewer</h2>
+          <p className={ui.cardHint}>Use snapshot poll or MJPEG /stream.</p>
         </div>
-        <div className={styles.pills}>
-          <span className={`${styles.pill} ${hasValidBase ? styles.pillOk : styles.pillErr}`}>
+        <div className={ui.pills}>
+          <span className={cx(ui.pill, hasValidBase ? ui.pillOk : ui.pillErr)}>
             {hasValidBase ? "base URL OK" : "invalid base URL"}
           </span>
-          <span className={`${styles.pill} ${isDeviceOnline ? styles.pillOk : styles.pillErr}`}>
+          <span className={cx(ui.pill, isDeviceOnline ? ui.pillOk : ui.pillErr)}>
             {isDeviceOnline ? "camera online" : "camera offline (light retry mode)"}
           </span>
-          <span className={styles.pill}>last poll: {formatTime(lastPollAt)}</span>
+          <span className={ui.pill}>last poll: {formatTime(lastPollAt)}</span>
         </div>
       </div>
 
-      <div className={styles.viewerModes}>
+      <div className={ui.viewerModes}>
         <button
           type="button"
           onClick={() => updateSetting("viewerMode", "snapshot-poll")}
-          className={`${styles.modeBtn} ${
-            settings.viewerMode === "snapshot-poll" ? styles.modeBtnActive : ""
-          }`}
+          className={cx(ui.modeBtn, settings.viewerMode === "snapshot-poll" && ui.modeBtnActive)}
         >
           snapshot poll
         </button>
         <button
           type="button"
           onClick={() => updateSetting("viewerMode", "mjpeg")}
-          className={`${styles.modeBtn} ${settings.viewerMode === "mjpeg" ? styles.modeBtnActive : ""}`}
+          className={cx(ui.modeBtn, settings.viewerMode === "mjpeg" && ui.modeBtnActive)}
         >
           MJPEG /stream
         </button>
       </div>
 
       {hasValidBase ? (
-        <div className={styles.viewerLayout}>
-          <div className={styles.viewerStage}>
+        <div className={ui.viewerLayout}>
+          <div className={ui.viewerStage}>
             {isDeviceOnline && viewerSrc ? (
-              <img src={viewerSrc} alt="camera stream" />
+              <img src={viewerSrc} alt="camera stream" className={ui.viewerMedia} />
             ) : (
-              <div className={styles.viewerEmpty}>
+              <div className={ui.viewerEmpty}>
                 Camera offline. Viewer requests are paused to avoid infinite reloading.
               </div>
             )}
           </div>
-          <aside className={styles.quickPanel}>
-            <h3 className={styles.quickTitle}>Quick Actions</h3>
-            <p className={styles.quickHint}>
+          <aside className={ui.quickPanel}>
+            <h3 className={ui.quickTitle}>Quick Actions</h3>
+            <p className={ui.quickHint}>
               If there is no activity, switch to power-saving mode and turn the camera off with Wi-Fi max save.
             </p>
-            <div className={styles.quickActionRow}>
+            <div className={ui.quickActionRow}>
               <button
                 type="button"
-                className={`${styles.button} ${styles.buttonWarn}`}
+                className={cx(ui.button, ui.buttonWarn)}
                 onClick={() => void onQuickEcoMode()}
                 disabled={!hasValidBase}
               >
                 Power Saving (eco)
               </button>
               <span
-                className={`${styles.quickStatus} ${
-                  isQuickEcoActive ? styles.quickStatusOn : styles.quickStatusOff
-                }`}
+                className={cx(ui.quickStatus, isQuickEcoActive ? ui.quickStatusOn : ui.quickStatusOff)}
               >
                 <EcoStateIcon active={isQuickEcoActive} />
                 {isQuickEcoActive ? "Active" : "Inactive"}
               </span>
             </div>
-            <p className={styles.quickApi}>
+            <p className={ui.quickApi}>
               <code>/power/profile?mode=eco&wifi=max</code>
             </p>
           </aside>
         </div>
       ) : (
-        <div className={styles.viewerEmpty}>Enter a valid URL (e.g. http://192.168.1.50) to start streaming.</div>
+        <div className={ui.viewerEmpty}>Enter a valid URL (e.g. http://192.168.1.50) to start streaming.</div>
       )}
 
-      <div className={styles.formActions}>
+      <div className={ui.formActions}>
         <button
           type="button"
-          className={`${styles.button} ${styles.buttonPrimary}`}
+          className={cx(ui.button, ui.buttonPrimary)}
           onClick={() => void takeSnapshot(false)}
           disabled={!hasValidBase}
         >
@@ -146,7 +141,7 @@ export function ViewerCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void takeSnapshot(true)}
           disabled={!hasValidBase}
         >
@@ -154,7 +149,7 @@ export function ViewerCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => openDirect("/stream")}
           disabled={!hasValidBase}
         >
@@ -162,7 +157,7 @@ export function ViewerCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => openDirect("/snapshot")}
           disabled={!hasValidBase}
         >
@@ -170,11 +165,11 @@ export function ViewerCard({
         </button>
       </div>
 
-      <div className={styles.previewStage}>
+      <div className={ui.previewStage}>
         {manualSnapshotUrl ? (
-          <img src={manualSnapshotUrl} alt="snapshot preview" />
+          <img src={manualSnapshotUrl} alt="snapshot preview" className={ui.previewImage} />
         ) : (
-          <div className={styles.viewerEmpty}>Manual snapshot preview</div>
+          <div className={ui.viewerEmpty}>Manual snapshot preview</div>
         )}
       </div>
     </article>

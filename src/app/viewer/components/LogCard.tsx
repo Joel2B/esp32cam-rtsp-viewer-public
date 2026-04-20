@@ -1,6 +1,5 @@
-import styles from "@/app/page.module.css";
-
 import type { LogEntry } from "../types";
+import { cx, ui } from "../ui";
 
 interface LogCardProps {
   logEntries: LogEntry[];
@@ -8,24 +7,24 @@ interface LogCardProps {
 
 export function LogCard({ logEntries }: LogCardProps) {
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTitleRow}>
-        <h2 className={styles.cardTitle}>Action Log</h2>
-        <span className={styles.cardHint}>max 40 entries</span>
+    <article className={ui.card}>
+      <div className={ui.cardTitleRow}>
+        <h2 className={ui.cardTitle}>Action Log</h2>
+        <span className={ui.cardHint}>max 40 entries</span>
       </div>
 
-      <div className={styles.logList}>
+      <div className={ui.logList}>
         {logEntries.length === 0 ? (
-          <div className={styles.logLine}>
+          <div className={ui.logLine}>
             <span>--:--:--</span>
             <span>---</span>
             <span>No actions yet</span>
           </div>
         ) : (
           logEntries.map((entry, index) => (
-            <div className={styles.logLine} key={`${entry.when}-${entry.action}-${index}`}>
+            <div className={ui.logLine} key={`${entry.when}-${entry.action}-${index}`}>
               <span>{entry.when}</span>
-              <span className={entry.status >= 200 && entry.status < 300 ? styles.logCodeOk : styles.logCodeErr}>
+              <span className={cx(entry.status >= 200 && entry.status < 300 ? ui.logCodeOk : ui.logCodeErr)}>
                 {entry.status === 0 ? "ERR" : entry.status}
               </span>
               <span>
@@ -36,7 +35,7 @@ export function LogCard({ logEntries }: LogCardProps) {
         )}
       </div>
 
-      <p className={styles.mini}>localStorage status: active. Values are restored on reload.</p>
+      <p className={ui.mini}>localStorage status: active. Values are restored on reload.</p>
     </article>
   );
 }

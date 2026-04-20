@@ -1,6 +1,5 @@
-import styles from "@/app/page.module.css";
-
 import type { CatalogItem, OpenDirect } from "../types";
+import { ui } from "../ui";
 
 interface EndpointCatalogCardProps {
   apiCatalog: CatalogItem[];
@@ -16,33 +15,33 @@ export function EndpointCatalogCard({
   openDirect,
 }: EndpointCatalogCardProps) {
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTitleRow}>
-        <h2 className={styles.cardTitle}>Endpoint Catalog</h2>
-        <p className={styles.cardHint}>Includes all firmware endpoints and options.</p>
+    <article className={ui.card}>
+      <div className={ui.cardTitleRow}>
+        <h2 className={ui.cardTitle}>Endpoint Catalog</h2>
+        <p className={ui.cardHint}>Includes all firmware endpoints and options.</p>
       </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
+      <div className={ui.tableWrap}>
+        <table className={ui.table}>
           <thead>
             <tr>
-              <th>Endpoint</th>
-              <th>Options</th>
-              <th>Description</th>
-              <th>Actions</th>
+              <th className={ui.th}>Endpoint</th>
+              <th className={ui.th}>Options</th>
+              <th className={ui.th}>Description</th>
+              <th className={ui.th}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {apiCatalog.map((item) => (
               <tr key={item.id}>
-                <td className={styles.code}>{item.path}</td>
-                <td className={styles.code}>{item.options}</td>
-                <td>{item.description}</td>
-                <td>
-                  <div className={styles.tableActions}>
+                <td className={`${ui.td} ${ui.code}`}>{item.path}</td>
+                <td className={`${ui.td} ${ui.code}`}>{item.options}</td>
+                <td className={ui.td}>{item.description}</td>
+                <td className={ui.td}>
+                  <div className={ui.tableActions}>
                     <button
                       type="button"
-                      className={styles.button}
+                      className={ui.button}
                       onClick={() => {
                         void runCatalogItem(item);
                       }}
@@ -52,7 +51,7 @@ export function EndpointCatalogCard({
                     </button>
                     <button
                       type="button"
-                      className={styles.button}
+                      className={ui.button}
                       onClick={() => openDirect(item.path, item.query ?? {})}
                       disabled={!hasValidBase}
                     >

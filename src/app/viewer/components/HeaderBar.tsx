@@ -1,6 +1,5 @@
-import styles from "@/app/page.module.css";
-
 import type { UpdateSetting, ViewerSettings } from "../types";
+import { cx, ui } from "../ui";
 import { clampInt, normalizeBaseUrl } from "../utils";
 
 interface HeaderBarProps {
@@ -17,22 +16,22 @@ export function HeaderBar({
   onRefreshDashboard,
 }: HeaderBarProps) {
   return (
-    <header className={styles.topbar}>
-      <div className={styles.titleBlock}>
-        <h1 className={styles.title}>ESP32CAM Viewer</h1>
-        <p className={styles.subtitle}>
+    <header className={ui.topbar}>
+      <div className={ui.titleBlock}>
+        <h1 className={ui.title}>ESP32CAM Viewer</h1>
+        <p className={ui.subtitle}>
           Single-panel app for all APIs. Viewer modes: <code>snapshot poll</code> and <code>/stream</code>.
         </p>
       </div>
 
-      <div className={styles.topControls}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="base-url">
+      <div className={ui.topControls}>
+        <div className={ui.field}>
+          <label className={ui.label} htmlFor="base-url">
             Base URL ESP
           </label>
           <input
             id="base-url"
-            className={styles.input}
+            className={ui.input}
             value={settings.baseUrl}
             onChange={(event) => updateSetting("baseUrl", event.target.value)}
             onBlur={() => updateSetting("baseUrl", normalizeBaseUrl(settings.baseUrl))}
@@ -40,13 +39,13 @@ export function HeaderBar({
           />
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="poll-ms">
+        <div className={ui.field}>
+          <label className={ui.label} htmlFor="poll-ms">
             Poll ms
           </label>
           <input
             id="poll-ms"
-            className={styles.input}
+            className={ui.input}
             type="number"
             min={1000}
             max={30000}
@@ -55,13 +54,13 @@ export function HeaderBar({
           />
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="retry-ms">
+        <div className={ui.field}>
+          <label className={ui.label} htmlFor="retry-ms">
             retry ms
           </label>
           <input
             id="retry-ms"
-            className={styles.input}
+            className={ui.input}
             type="number"
             min={500}
             max={60000}
@@ -72,13 +71,13 @@ export function HeaderBar({
           />
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="snap-poll">
+        <div className={ui.field}>
+          <label className={ui.label} htmlFor="snap-poll">
             poll snapshot
           </label>
           <input
             id="snap-poll"
-            className={styles.input}
+            className={ui.input}
             type="number"
             min={250}
             max={10000}
@@ -90,7 +89,7 @@ export function HeaderBar({
         </div>
 
         <button
-          className={`${styles.button} ${styles.buttonPrimary}`}
+          className={cx(ui.button, ui.buttonPrimary)}
           onClick={onRefreshDashboard}
           disabled={!hasValidBase}
           type="button"

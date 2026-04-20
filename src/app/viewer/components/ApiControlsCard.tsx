@@ -1,10 +1,9 @@
-import styles from "@/app/page.module.css";
-
 import type {
   RunAndInspect,
   UpdateSetting,
   ViewerSettings,
 } from "../types";
+import { cx, ui } from "../ui";
 import { clampInt } from "../utils";
 
 interface ApiControlsCardProps {
@@ -21,20 +20,20 @@ export function ApiControlsCard({
   runAndInspect,
 }: ApiControlsCardProps) {
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTitleRow}>
-        <h2 className={styles.cardTitle}>API Controls (Persistent)</h2>
-        <p className={styles.cardHint}>All values are saved to localStorage.</p>
+    <article className={ui.card}>
+      <div className={ui.cardTitleRow}>
+        <h2 className={ui.cardTitle}>API Controls (Persistent)</h2>
+        <p className={ui.cardHint}>All values are saved to localStorage.</p>
       </div>
 
-      <div className={styles.formGrid}>
+      <div className={ui.formGrid}>
         <div>
-          <label className={styles.label} htmlFor="http-fps-target">
+          <label className={ui.label} htmlFor="http-fps-target">
             HTTP FPS set
           </label>
           <input
             id="http-fps-target"
-            className={styles.input}
+            className={ui.input}
             type="number"
             min={0}
             max={120}
@@ -46,12 +45,12 @@ export function ApiControlsCard({
         </div>
 
         <div>
-          <label className={styles.label} htmlFor="power-mode">
+          <label className={ui.label} htmlFor="power-mode">
             Power mode
           </label>
           <select
             id="power-mode"
-            className={styles.select}
+            className={ui.select}
             value={settings.powerMode}
             onChange={(event) => updateSetting("powerMode", event.target.value as ViewerSettings["powerMode"])}
           >
@@ -62,12 +61,12 @@ export function ApiControlsCard({
         </div>
 
         <div>
-          <label className={styles.label} htmlFor="power-mhz">
+          <label className={ui.label} htmlFor="power-mhz">
             CPU MHz
           </label>
           <select
             id="power-mhz"
-            className={styles.select}
+            className={ui.select}
             value={settings.powerMhz}
             onChange={(event) =>
               updateSetting("powerMhz", Number(event.target.value) as ViewerSettings["powerMhz"])
@@ -80,12 +79,12 @@ export function ApiControlsCard({
         </div>
 
         <div>
-          <label className={styles.label} htmlFor="power-wifi">
+          <label className={ui.label} htmlFor="power-wifi">
             WiFi PS
           </label>
           <select
             id="power-wifi"
-            className={styles.select}
+            className={ui.select}
             value={settings.powerWifi}
             onChange={(event) =>
               updateSetting("powerWifi", event.target.value as ViewerSettings["powerWifi"])
@@ -98,10 +97,10 @@ export function ApiControlsCard({
         </div>
       </div>
 
-      <div className={styles.formActions}>
+      <div className={ui.formActions}>
         <button
           type="button"
-          className={`${styles.button} ${styles.buttonPrimary}`}
+          className={cx(ui.button, ui.buttonPrimary)}
           onClick={() =>
             void runAndInspect(
               "/power/profile",
@@ -115,7 +114,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void runAndInspect("/power/profile", { mhz: settings.powerMhz }, "/power/profile?mhz")}
           disabled={!hasValidBase}
         >
@@ -123,7 +122,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void runAndInspect("/http/fps", { set: settings.httpFpsTarget }, "/http/fps?set")}
           disabled={!hasValidBase}
         >
@@ -131,14 +130,14 @@ export function ApiControlsCard({
         </button>
       </div>
 
-      <div className={styles.formGrid3}>
+      <div className={ui.formGrid3}>
         <div>
-          <label className={styles.label} htmlFor="autosleep-enable">
+          <label className={ui.label} htmlFor="autosleep-enable">
             Autosleep
           </label>
           <select
             id="autosleep-enable"
-            className={styles.select}
+            className={ui.select}
             value={settings.autosleepEnable ? "1" : "0"}
             onChange={(event) => updateSetting("autosleepEnable", event.target.value === "1")}
           >
@@ -148,12 +147,12 @@ export function ApiControlsCard({
         </div>
 
         <div>
-          <label className={styles.label} htmlFor="sleep-sec">
+          <label className={ui.label} htmlFor="sleep-sec">
             Sleep sec
           </label>
           <input
             id="sleep-sec"
-            className={styles.input}
+            className={ui.input}
             type="number"
             min={1}
             max={86400}
@@ -163,12 +162,12 @@ export function ApiControlsCard({
         </div>
 
         <div>
-          <label className={styles.label} htmlFor="flash-value">
+          <label className={ui.label} htmlFor="flash-value">
             Flash v
           </label>
           <input
             id="flash-value"
-            className={styles.input}
+            className={ui.input}
             type="number"
             min={0}
             max={255}
@@ -178,10 +177,10 @@ export function ApiControlsCard({
         </div>
       </div>
 
-      <div className={styles.formActions}>
+      <div className={ui.formActions}>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() =>
             void runAndInspect("/autosleep", { enable: settings.autosleepEnable ? 1 : 0 }, "/autosleep")
           }
@@ -191,7 +190,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void runAndInspect("/sleep", { sec: settings.sleepSec }, "/sleep?sec")}
           disabled={!hasValidBase}
         >
@@ -199,7 +198,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={`${styles.button} ${styles.buttonWarn}`}
+          className={cx(ui.button, ui.buttonWarn)}
           onClick={() => {
             if (!window.confirm("Send deep sleep command to the device?")) return;
             void runAndInspect("/sleep", { deep: 1 }, "/sleep?deep=1");
@@ -210,7 +209,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void runAndInspect("/flash", { v: settings.flashValue }, "/flash?v")}
           disabled={!hasValidBase}
         >
@@ -219,22 +218,22 @@ export function ApiControlsCard({
       </div>
 
       <div>
-        <label className={styles.label} htmlFor="tg-msg">
+        <label className={ui.label} htmlFor="tg-msg">
           Telegram msg
         </label>
         <textarea
           id="tg-msg"
-          className={styles.textarea}
+          className={ui.textarea}
           rows={2}
           value={settings.telegramMessage}
           onChange={(event) => updateSetting("telegramMessage", event.target.value)}
         />
       </div>
 
-      <div className={styles.formActions}>
+      <div className={ui.formActions}>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void runAndInspect("/telegram", { msg: settings.telegramMessage }, "/telegram?msg")}
           disabled={!hasValidBase}
         >
@@ -242,7 +241,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={ui.button}
           onClick={() => void runAndInspect("/ina226/resetcounters", {}, "/ina226/resetcounters")}
           disabled={!hasValidBase}
         >
@@ -250,7 +249,7 @@ export function ApiControlsCard({
         </button>
         <button
           type="button"
-          className={`${styles.button} ${styles.buttonDanger}`}
+          className={cx(ui.button, ui.buttonDanger)}
           onClick={() => {
             if (!window.confirm("Restart the board?")) return;
             void runAndInspect("/restart", {}, "/restart");

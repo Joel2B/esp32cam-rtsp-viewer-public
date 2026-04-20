@@ -1,7 +1,6 @@
-import styles from "@/app/page.module.css";
-
 import { POLL_TARGETS } from "../constants";
 import type { DashboardKey, EndpointState } from "../types";
+import { cx, ui } from "../ui";
 import {
   asBoolean,
   asNumber,
@@ -30,20 +29,20 @@ export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
   const autosleep = asRecord(dashboard.autosleep?.data);
 
   return (
-    <article className={styles.card}>
-      <div className={styles.cardTitleRow}>
-        <h2 className={styles.cardTitle}>Live Summary</h2>
-        <p className={styles.cardHint}>Auto refresh every {pollMs} ms.</p>
+    <article className={ui.card}>
+      <div className={ui.cardTitleRow}>
+        <h2 className={ui.cardTitle}>Live Summary</h2>
+        <p className={ui.cardHint}>Auto refresh every {pollMs} ms.</p>
       </div>
 
-      <div className={styles.pills}>
+      <div className={ui.pills}>
         {POLL_TARGETS.map((target) => {
           const state = dashboard[target.key];
           const ok = !!state?.ok;
           return (
             <span
               key={target.key}
-              className={`${styles.pill} ${ok ? styles.pillOk : styles.pillErr}`}
+              className={cx(ui.pill, ok ? ui.pillOk : ui.pillErr)}
               title={target.path}
             >
               {target.path}: {ok ? "ok" : `err ${state?.status ?? "--"}`}
@@ -52,67 +51,67 @@ export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
         })}
       </div>
 
-      <div className={styles.kvGrid}>
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>camera initialized</div>
-          <div className={styles.kvValue}>{asBoolean(cameraConfig?.camera_initialized) ? "true" : "false"}</div>
+      <div className={ui.kvGrid}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>camera initialized</div>
+          <div className={ui.kvValue}>{asBoolean(cameraConfig?.camera_initialized) ? "true" : "false"}</div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>RTSP fps / sessions</div>
-          <div className={styles.kvValue}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>RTSP fps / sessions</div>
+          <div className={ui.kvValue}>
             {formatNum(asNumber(rtspStats?.fps), 2)} / {asNumber(rtspStats?.sessions) ?? "--"}
           </div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>HTTP fps target/avg</div>
-          <div className={styles.kvValue}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>HTTP fps target/avg</div>
+          <div className={ui.kvValue}>
             {formatNum(asNumber(httpFps?.target), 2)} / {formatNum(asNumber(httpFps?.fps_avg), 2)}
           </div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>CPU core0/core1</div>
-          <div className={styles.kvValue}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>CPU core0/core1</div>
+          <div className={ui.kvValue}>
             {formatNum(asNumber(cpu?.core0), 1)} / {formatNum(asNumber(cpu?.core1), 1)}
           </div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>RAM free / PSRAM free</div>
-          <div className={styles.kvValue}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>RAM free / PSRAM free</div>
+          <div className={ui.kvValue}>
             {formatNum(asNumber(ram?.free), 2)} MB / {formatNum(asNumber(psram?.free), 2)} MB
           </div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>INA226 V/I/P</div>
-          <div className={styles.kvValue}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>INA226 V/I/P</div>
+          <div className={ui.kvValue}>
             {formatNum(asNumber(ina?.vbat_V), 3)} V / {formatNum(asNumber(ina?.ishunt_mA), 1)} mA / {formatNum(asNumber(ina?.psys_mW), 0)} mW
           </div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>Light dark / dark_frame</div>
-          <div className={styles.kvValue}>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Light dark / dark_frame</div>
+          <div className={ui.kvValue}>
             {String(asBoolean(light?.dark) ?? "--")} / {String(asBoolean(light?.dark_frame) ?? "--")}
           </div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>RCWL state</div>
-          <div className={styles.kvValue}>{asString(rcwl?.state) ?? "--"}</div>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>RCWL state</div>
+          <div className={ui.kvValue}>{asString(rcwl?.state) ?? "--"}</div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>Autosleep enabled</div>
-          <div className={styles.kvValue}>{String(asBoolean(autosleep?.enabled) ?? "--")}</div>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Autosleep enabled</div>
+          <div className={ui.kvValue}>{String(asBoolean(autosleep?.enabled) ?? "--")}</div>
         </div>
 
-        <div className={styles.kv}>
-          <div className={styles.kvLabel}>OTA progress</div>
-          <div className={styles.kvValue}>{asNumber(otaProgress?.pct) ?? "--"}%</div>
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>OTA progress</div>
+          <div className={ui.kvValue}>{asNumber(otaProgress?.pct) ?? "--"}%</div>
         </div>
       </div>
     </article>

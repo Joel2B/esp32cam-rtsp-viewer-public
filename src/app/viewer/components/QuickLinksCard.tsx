@@ -1,6 +1,5 @@
-import styles from "@/app/page.module.css";
-
 import type { OpenDirect } from "../types";
+import { ui } from "../ui";
 
 interface QuickLinksCardProps {
   hasValidBase: boolean;
@@ -18,14 +17,14 @@ const QUICK_ENDPOINTS = [
 
 export function QuickLinksCard({ hasValidBase, openDirect }: QuickLinksCardProps) {
   return (
-    <article className={styles.card}>
-      <h2 className={styles.cardTitle}>Quick Links</h2>
-      <div className={styles.footerLinks}>
+    <article className={ui.card}>
+      <h2 className={ui.cardTitle}>Quick Links</h2>
+      <div className={ui.footerLinks}>
         {QUICK_ENDPOINTS.map((path) => (
           <button
             key={path}
             type="button"
-            className={styles.linkChip}
+            className={ui.linkChip}
             onClick={() => openDirect(path)}
             disabled={!hasValidBase}
           >

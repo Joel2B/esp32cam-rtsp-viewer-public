@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import styles from "./page.module.css";
 import { POLL_TARGETS } from "./viewer/constants";
 import { ApiControlsCard } from "./viewer/components/ApiControlsCard";
 import { EndpointCatalogCard } from "./viewer/components/EndpointCatalogCard";
@@ -21,6 +20,7 @@ import type {
   LogEntry,
   QueryMap,
 } from "./viewer/types";
+import { ui } from "./viewer/ui";
 import {
   createApiCatalog,
   endpointResultText,
@@ -270,7 +270,7 @@ export default function Home() {
         : "";
 
   return (
-    <div className={styles.shell}>
+    <div className={ui.shell}>
       <HeaderBar
         settings={settings}
         hasValidBase={hasValidBase}
@@ -280,8 +280,8 @@ export default function Home() {
         }}
       />
 
-      <main className={styles.grid}>
-        <section className={styles.column}>
+      <main className={ui.grid}>
+        <section className={ui.column}>
           <ViewerCard
             settings={settings}
             hasValidBase={hasValidBase}
@@ -311,7 +311,7 @@ export default function Home() {
           />
         </section>
 
-        <section className={styles.column}>
+        <section className={ui.column}>
           <LiveSummaryCard pollMs={settings.pollMs} dashboard={dashboard} />
           <InspectorCard inspectorText={inspectorText} />
           <LogCard logEntries={logEntries} />
