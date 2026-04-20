@@ -6,8 +6,8 @@ type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
-function resolveTimeoutMs(raw: string | null): number {
-  if (!raw) return 10000;
+function resolveTimeoutMs(raw: string | null): number | null {
+  if (!raw) return null;
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return 10000;
   const rounded = Math.round(parsed);
@@ -55,10 +55,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   let upstream: Response;
   const upstreamController = new AbortController();
   let didTimeout = false;
-  const timeoutId = setTimeout(() => {
-    didTimeout = true;
-    upstreamController.abort();
-  }, timeoutMs);
+  const timeoutId =
+    timeoutMs === null
+      ? null
+      : setTimeout(() => {
+          didTimeout = true;
+          upstreamController.abort();
+        }, timeoutMs);
   const onClientAbort = () => upstreamController.abort();
   request.signal.addEventListener("abort", onClientAbort, { once: true });
 
@@ -94,7 +97,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       { status },
     );
   } finally {
-    clearTimeout(timeoutId);
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
     request.signal.removeEventListener("abort", onClientAbort);
   }
 

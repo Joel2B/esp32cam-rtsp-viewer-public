@@ -40,6 +40,7 @@ export default function Home() {
   const [mjpegRetryNonce, setMjpegRetryNonce] = useState<number>(0);
   const [lastPollAt, setLastPollAt] = useState<number | null>(null);
   const refreshInFlightRef = useRef(false);
+  const offlineProbeTargets = useMemo(() => POLL_TARGETS.slice(0, 3), []);
 
   const addLog = useCallback((action: string, status: number, message: string) => {
     const entry: LogEntry = {
@@ -70,14 +71,14 @@ export default function Home() {
 
     refreshInFlightRef.current = true;
     try {
-      const pollTargets = isDeviceOnline ? POLL_TARGETS : [POLL_TARGETS[0]];
+      const pollTargets = isDeviceOnline ? POLL_TARGETS : offlineProbeTargets;
 
       const responses = await Promise.all(
         pollTargets.map(async (target) => {
           const query = target.query ? target.query(settings) : {};
           const result = await requestEndpoint(target.path, query, {
             silent: true,
-            timeoutMs: isDeviceOnline ? 7000 : 3500,
+            timeoutMs: 7000,
           });
 
           return [target.key, result] as const;
@@ -99,11 +100,11 @@ export default function Home() {
     } finally {
       refreshInFlightRef.current = false;
     }
-  }, [hasValidBase, isDeviceOnline, requestEndpoint, settings]);
+  }, [hasValidBase, isDeviceOnline, offlineProbeTargets, requestEndpoint, settings]);
 
   const dashboardPollMs = isDeviceOnline
     ? settings.pollMs
-    : Math.max(settings.reconnectMs, 10000);
+    : Math.max(settings.reconnectMs, 4000);
 
   useEffect(() => {
     if (!hasValidBase) return;
@@ -255,11 +256,11 @@ export default function Home() {
   );
 
   const snapshotPollSrc = hasValidBase
-    ? buildProxyUrl("/snapshot", { _: snapshotPollNonce, __timeoutMs: 5000 })
+    ? buildProxyUrl("/snapshot", { _: snapshotPollNonce, __timeoutMs: 8000 })
     : "";
 
   const mjpegSrc = hasValidBase
-    ? buildProxyUrl("/stream", { _: mjpegRetryNonce, __timeoutMs: 5000 })
+    ? buildProxyUrl("/stream", { _: mjpegRetryNonce })
     : "";
 
   const viewerSrc =
