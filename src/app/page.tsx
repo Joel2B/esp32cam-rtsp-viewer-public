@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import styles from "./page.module.css";
 import { POLL_TARGETS } from "./viewer/constants";
@@ -34,11 +34,12 @@ export default function Home() {
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [inspectorText, setInspectorText] = useState("Ready. Run an API call to see the response.");
   const [manualSnapshotUrl, setManualSnapshotUrl] = useState("");
-  const [isDeviceOnline, setIsDeviceOnline] = useState(true);
+  const [isDeviceOnline, setIsDeviceOnline] = useState(false);
   const [isQuickEcoActive, setIsQuickEcoActive] = useState(false);
   const [snapshotPollNonce, setSnapshotPollNonce] = useState<number>(0);
   const [mjpegRetryNonce, setMjpegRetryNonce] = useState<number>(0);
   const [lastPollAt, setLastPollAt] = useState<number | null>(null);
+  const refreshInFlightRef = useRef(false);
 
   const addLog = useCallback((action: string, status: number, message: string) => {
     const entry: LogEntry = {
@@ -65,33 +66,44 @@ export default function Home() {
   }, [manualSnapshotUrl]);
 
   const refreshDashboard = useCallback(async () => {
-    if (!hasValidBase) return;
+    if (!hasValidBase || refreshInFlightRef.current) return;
 
-    const responses = await Promise.all(
-      POLL_TARGETS.map(async (target) => {
-        const query = target.query ? target.query(settings) : {};
-        const result = await requestEndpoint(target.path, query, {
-          silent: true,
-          timeoutMs: 7000,
-        });
+    refreshInFlightRef.current = true;
+    try {
+      const pollTargets = isDeviceOnline ? POLL_TARGETS : [POLL_TARGETS[0]];
 
-        return [target.key, result] as const;
-      }),
-    );
+      const responses = await Promise.all(
+        pollTargets.map(async (target) => {
+          const query = target.query ? target.query(settings) : {};
+          const result = await requestEndpoint(target.path, query, {
+            silent: true,
+            timeoutMs: isDeviceOnline ? 7000 : 3500,
+          });
 
-    const next: Partial<Record<DashboardKey, EndpointState>> = {};
-    for (const [key, value] of responses) next[key] = value;
+          return [target.key, result] as const;
+        }),
+      );
 
-    const allConnectionFailures = responses.every(([, value]) => isConnectionFailure(value));
-    const onlineNow = !allConnectionFailures;
+      const next: Partial<Record<DashboardKey, EndpointState>> = {};
+      for (const [key, value] of responses) next[key] = value;
 
-    setDashboard(next);
-    setIsDeviceOnline(onlineNow);
-    if (!onlineNow) {
-      setIsQuickEcoActive(false);
+      const allConnectionFailures = responses.every(([, value]) => isConnectionFailure(value));
+      const onlineNow = !allConnectionFailures;
+
+      setDashboard((prev) => (isDeviceOnline ? next : { ...prev, ...next }));
+      setIsDeviceOnline(onlineNow);
+      if (!onlineNow) {
+        setIsQuickEcoActive(false);
+      }
+      setLastPollAt(Date.now());
+    } finally {
+      refreshInFlightRef.current = false;
     }
-    setLastPollAt(Date.now());
-  }, [hasValidBase, requestEndpoint, settings]);
+  }, [hasValidBase, isDeviceOnline, requestEndpoint, settings]);
+
+  const dashboardPollMs = isDeviceOnline
+    ? settings.pollMs
+    : Math.max(settings.reconnectMs, 10000);
 
   useEffect(() => {
     if (!hasValidBase) return;
@@ -102,33 +114,31 @@ export default function Home() {
 
     const timer = window.setInterval(() => {
       void refreshDashboard();
-    }, settings.pollMs);
+    }, dashboardPollMs);
 
     return () => {
       window.clearTimeout(kick);
       window.clearInterval(timer);
     };
-  }, [hasValidBase, refreshDashboard, settings.pollMs]);
+  }, [dashboardPollMs, hasValidBase, refreshDashboard]);
 
   useEffect(() => {
-    if (!hasValidBase || settings.viewerMode !== "snapshot-poll") return;
+    if (!hasValidBase || !isDeviceOnline || settings.viewerMode !== "snapshot-poll") return;
 
     const timer = window.setInterval(() => {
       setSnapshotPollNonce(Date.now());
     }, settings.snapshotPollMs);
 
     return () => window.clearInterval(timer);
-  }, [hasValidBase, settings.snapshotPollMs, settings.viewerMode]);
+  }, [hasValidBase, isDeviceOnline, settings.snapshotPollMs, settings.viewerMode]);
 
   useEffect(() => {
-    if (!hasValidBase || settings.viewerMode !== "mjpeg" || isDeviceOnline) return;
-
-    const timer = window.setInterval(() => {
+    if (!hasValidBase || !isDeviceOnline || settings.viewerMode !== "mjpeg") return;
+    const timer = window.setTimeout(() => {
       setMjpegRetryNonce(Date.now());
-    }, settings.reconnectMs);
-
-    return () => window.clearInterval(timer);
-  }, [hasValidBase, isDeviceOnline, settings.reconnectMs, settings.viewerMode]);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [hasValidBase, isDeviceOnline, settings.viewerMode]);
 
   const runAndInspect = useCallback(
     async (path: string, query: QueryMap = {}, actionLabel?: string) => {
@@ -245,13 +255,19 @@ export default function Home() {
   );
 
   const snapshotPollSrc = hasValidBase
-    ? buildProxyUrl("/snapshot", { _: snapshotPollNonce })
+    ? buildProxyUrl("/snapshot", { _: snapshotPollNonce, __timeoutMs: 5000 })
     : "";
 
-  const mjpegSrc = hasValidBase ? buildProxyUrl("/stream", { _: mjpegRetryNonce }) : "";
+  const mjpegSrc = hasValidBase
+    ? buildProxyUrl("/stream", { _: mjpegRetryNonce, __timeoutMs: 5000 })
+    : "";
 
   const viewerSrc =
-    settings.viewerMode === "snapshot-poll" ? snapshotPollSrc : mjpegSrc;
+    isDeviceOnline && settings.viewerMode === "snapshot-poll"
+      ? snapshotPollSrc
+      : isDeviceOnline
+        ? mjpegSrc
+        : "";
 
   return (
     <div className={styles.shell}>

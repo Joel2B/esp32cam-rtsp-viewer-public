@@ -6,6 +6,14 @@ type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
+function resolveTimeoutMs(raw: string | null): number {
+  if (!raw) return 10000;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return 10000;
+  const rounded = Math.round(parsed);
+  return Math.min(30000, Math.max(1000, rounded));
+}
+
 function resolveBase(base: string | null): URL | null {
   if (!base) return null;
 
@@ -37,28 +45,57 @@ export async function GET(request: NextRequest, context: RouteContext) {
     : new URL(base.href);
 
   const targetParams = new URLSearchParams(search);
+  const timeoutMs = resolveTimeoutMs(targetParams.get("__timeoutMs"));
   targetParams.delete("base");
+  targetParams.delete("__timeoutMs");
 
   const query = targetParams.toString();
   if (query.length > 0) target.search = query;
 
   let upstream: Response;
+  const upstreamController = new AbortController();
+  let didTimeout = false;
+  const timeoutId = setTimeout(() => {
+    didTimeout = true;
+    upstreamController.abort();
+  }, timeoutMs);
+  const onClientAbort = () => upstreamController.abort();
+  request.signal.addEventListener("abort", onClientAbort, { once: true });
+
   try {
     upstream = await fetch(target, {
       cache: "no-store",
+      signal: upstreamController.signal,
       headers: {
         Accept: request.headers.get("accept") ?? "*/*",
       },
     });
   } catch (error) {
+    const abortedByClient = request.signal.aborted;
+    const status = didTimeout ? 504 : 502;
+    const reason = didTimeout ? "Device request timed out" : "Failed to connect to device";
+
+    if (abortedByClient) {
+      return Response.json(
+        {
+          ok: false,
+          error: "Client aborted request",
+        },
+        { status: 499 },
+      );
+    }
+
     return Response.json(
       {
         ok: false,
-        error: "Failed to connect to device",
+        error: reason,
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 502 },
+      { status },
     );
+  } finally {
+    clearTimeout(timeoutId);
+    request.signal.removeEventListener("abort", onClientAbort);
   }
 
   const headers = new Headers();

@@ -67,7 +67,7 @@ export function ViewerCard({
             {hasValidBase ? "base URL OK" : "invalid base URL"}
           </span>
           <span className={`${styles.pill} ${isDeviceOnline ? styles.pillOk : styles.pillErr}`}>
-            {isDeviceOnline ? "camera online" : `camera offline (retry ${settings.reconnectMs}ms)`}
+            {isDeviceOnline ? "camera online" : "camera offline (light retry mode)"}
           </span>
           <span className={styles.pill}>last poll: {formatTime(lastPollAt)}</span>
         </div>
@@ -95,7 +95,13 @@ export function ViewerCard({
       {hasValidBase ? (
         <div className={styles.viewerLayout}>
           <div className={styles.viewerStage}>
-            <img src={viewerSrc} alt="camera stream" />
+            {isDeviceOnline && viewerSrc ? (
+              <img src={viewerSrc} alt="camera stream" />
+            ) : (
+              <div className={styles.viewerEmpty}>
+                Camera offline. Viewer requests are paused to avoid infinite reloading.
+              </div>
+            )}
           </div>
           <aside className={styles.quickPanel}>
             <h3 className={styles.quickTitle}>Quick Actions</h3>
