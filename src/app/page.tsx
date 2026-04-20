@@ -3,29 +3,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import styles from "./page.module.css";
-import { POLL_TARGETS } from "@/features/viewer/constants";
-import { ApiControlsCard } from "@/features/viewer/components/ApiControlsCard";
-import { EndpointCatalogCard } from "@/features/viewer/components/EndpointCatalogCard";
-import { HeaderBar } from "@/features/viewer/components/HeaderBar";
-import { InspectorCard } from "@/features/viewer/components/InspectorCard";
-import { LiveSummaryCard } from "@/features/viewer/components/LiveSummaryCard";
-import { LogCard } from "@/features/viewer/components/LogCard";
-import { QuickLinksCard } from "@/features/viewer/components/QuickLinksCard";
-import { ViewerCard } from "@/features/viewer/components/ViewerCard";
-import { useEspApi } from "@/features/viewer/hooks/useEspApi";
-import { useViewerSettings } from "@/features/viewer/hooks/useViewerSettings";
+import { POLL_TARGETS } from "./viewer/constants";
+import { ApiControlsCard } from "./viewer/components/ApiControlsCard";
+import { EndpointCatalogCard } from "./viewer/components/EndpointCatalogCard";
+import { HeaderBar } from "./viewer/components/HeaderBar";
+import { InspectorCard } from "./viewer/components/InspectorCard";
+import { LiveSummaryCard } from "./viewer/components/LiveSummaryCard";
+import { LogCard } from "./viewer/components/LogCard";
+import { QuickLinksCard } from "./viewer/components/QuickLinksCard";
+import { ViewerCard } from "./viewer/components/ViewerCard";
+import { useEspApi } from "./viewer/hooks/useEspApi";
+import { useViewerSettings } from "./viewer/hooks/useViewerSettings";
 import type {
   CatalogItem,
   DashboardKey,
   EndpointState,
   LogEntry,
   QueryMap,
-} from "@/features/viewer/types";
+} from "./viewer/types";
 import {
   createApiCatalog,
   endpointResultText,
   isConnectionFailure,
-} from "@/features/viewer/utils";
+} from "./viewer/utils";
 
 export default function Home() {
   const { settings, updateSetting } = useViewerSettings();
