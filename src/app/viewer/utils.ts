@@ -149,6 +149,28 @@ export function isConnectionFailure(result: EndpointState): boolean {
   return false;
 }
 
+export function isCameraConfigHealthy(result: EndpointState): boolean {
+  if (!result.ok || isConnectionFailure(result)) return false;
+
+  const payload = asRecord(result.data);
+  if (!payload) return false;
+
+  const hasCameraInitialized = typeof payload.camera_initialized === "boolean";
+  const hasKnownCameraKey =
+    "framesize" in payload ||
+    "quality" in payload ||
+    "pixformat" in payload ||
+    "fb_count" in payload ||
+    "xclk_mhz" in payload;
+
+  return hasCameraInitialized || hasKnownCameraKey;
+}
+
+export function isSnapshotHealthy(result: EndpointState): boolean {
+  if (!result.ok || isConnectionFailure(result)) return false;
+  return typeof result.data === "string" && result.data.startsWith("[image/");
+}
+
 export function createApiCatalog(settings: ViewerSettings): CatalogItem[] {
   return [
     {

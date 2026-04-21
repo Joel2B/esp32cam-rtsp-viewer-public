@@ -25,6 +25,7 @@ import {
   createApiCatalog,
   endpointResultText,
   isConnectionFailure,
+  isSnapshotHealthy,
 } from "./viewer/utils";
 
 export default function Home() {
@@ -40,10 +41,8 @@ export default function Home() {
   const [mjpegRetryNonce, setMjpegRetryNonce] = useState<number>(0);
   const [lastPollAt, setLastPollAt] = useState<number | null>(null);
   const refreshInFlightRef = useRef(false);
-  const hasFetchedOnConnectRef = useRef(false);
+  const wasOnlineRef = useRef(false);
   const isDashboardPollingOff = settings.dashboardFetchMode === "off";
-  const offlineProbeTargets = useMemo(() => POLL_TARGETS.slice(0, 3), []);
-  const connectionProbeTargets = useMemo(() => [POLL_TARGETS[0]], []);
 
   const addLog = useCallback((action: string, status: number, message: string) => {
     const entry: LogEntry = {
@@ -77,8 +76,7 @@ export default function Home() {
       const next: Partial<Record<DashboardKey, EndpointState>> = {};
       for (const [key, value] of responses) next[key] = value;
 
-      const allConnectionFailures = responses.every(([, value]) => isConnectionFailure(value));
-      const onlineNow = !allConnectionFailures;
+      const onlineNow = responses.some(([, value]) => value.ok && !isConnectionFailure(value));
 
       setDashboard((prev) => (mergeWithPrevious ? { ...prev, ...next } : next));
       setIsDeviceOnline(onlineNow);
@@ -92,15 +90,35 @@ export default function Home() {
     [],
   );
 
+  const probeSnapshotOnline = useCallback(async (): Promise<boolean> => {
+    const result = await requestEndpoint(
+      "/snapshot",
+      { refresh: 1 },
+      { silent: true, timeoutMs: 7000 },
+    );
+
+    const onlineNow = isSnapshotHealthy(result);
+    setIsDeviceOnline(onlineNow);
+    if (!onlineNow) {
+      setIsQuickEcoActive(false);
+    }
+    setLastPollAt(Date.now());
+
+    return onlineNow;
+  }, [requestEndpoint]);
+
   const refreshDashboard = useCallback(async () => {
     if (!hasValidBase || refreshInFlightRef.current || isDashboardPollingOff) return;
 
     refreshInFlightRef.current = true;
     try {
-      const pollTargets = isDeviceOnline ? POLL_TARGETS : offlineProbeTargets;
+      if (!isDeviceOnline) {
+        const onlineNow = await probeSnapshotOnline();
+        if (!onlineNow) return;
+      }
 
       const responses = await Promise.all(
-        pollTargets.map(async (target) => {
+        POLL_TARGETS.map(async (target) => {
           const query = target.query ? target.query(settings) : {};
           const result = await requestEndpoint(target.path, query, {
             silent: true,
@@ -111,7 +129,7 @@ export default function Home() {
         }),
       );
 
-      applyPollResponses(responses, !isDeviceOnline);
+      applyPollResponses(responses, false);
     } finally {
       refreshInFlightRef.current = false;
     }
@@ -120,7 +138,7 @@ export default function Home() {
     hasValidBase,
     isDashboardPollingOff,
     isDeviceOnline,
-    offlineProbeTargets,
+    probeSnapshotOnline,
     requestEndpoint,
     settings,
   ]);
@@ -130,29 +148,14 @@ export default function Home() {
 
     refreshInFlightRef.current = true;
     try {
-      const responses = await Promise.all(
-        connectionProbeTargets.map(async (target) => {
-          const query = target.query ? target.query(settings) : {};
-          const result = await requestEndpoint(target.path, query, {
-            silent: true,
-            timeoutMs: 7000,
-          });
-
-          return [target.key, result] as const;
-        }),
-      );
-
-      applyPollResponses(responses, true);
+      void (await probeSnapshotOnline());
     } finally {
       refreshInFlightRef.current = false;
     }
   }, [
-    applyPollResponses,
-    connectionProbeTargets,
     hasValidBase,
     isDashboardPollingOff,
-    requestEndpoint,
-    settings,
+    probeSnapshotOnline,
   ]);
 
   const dashboardPollMs = isDeviceOnline
@@ -160,7 +163,7 @@ export default function Home() {
     : Math.max(settings.reconnectMs, 4000);
 
   useEffect(() => {
-    hasFetchedOnConnectRef.current = false;
+    wasOnlineRef.current = false;
     if (isDashboardPollingOff) {
       setIsDeviceOnline(true);
       return;
@@ -204,11 +207,16 @@ export default function Home() {
   }, [hasValidBase, probeConnection, settings.dashboardFetchMode, settings.reconnectMs]);
 
   useEffect(() => {
-    if (settings.dashboardFetchMode !== "on-connect" || !hasValidBase || !isDeviceOnline) return;
-    if (hasFetchedOnConnectRef.current) return;
+    if (settings.dashboardFetchMode !== "on-connect" || !hasValidBase) {
+      wasOnlineRef.current = false;
+      return;
+    }
 
-    hasFetchedOnConnectRef.current = true;
-    void refreshDashboard();
+    if (!wasOnlineRef.current && isDeviceOnline) {
+      void refreshDashboard();
+    }
+
+    wasOnlineRef.current = isDeviceOnline;
   }, [hasValidBase, isDeviceOnline, refreshDashboard, settings.dashboardFetchMode]);
 
   const effectiveDeviceOnline = isDashboardPollingOff ? true : isDeviceOnline;
