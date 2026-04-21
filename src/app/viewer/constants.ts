@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: ViewerSettings = {
   baseUrl: "http://192.168.1.50",
   pollMs: 3000,
   reconnectMs: 2000,
+  dashboardFetchMode: "interval",
   viewerMode: "snapshot-poll",
   snapshotPollMs: 1000,
   httpFpsTarget: 10,

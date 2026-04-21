@@ -1,6 +1,7 @@
 export type ViewerMode = "snapshot-poll" | "mjpeg";
 export type PowerMode = "eco" | "normal" | "view";
 export type WifiPowerSave = "none" | "min" | "max";
+export type DashboardFetchMode = "on-connect" | "interval" | "off";
 
 export type QueryValue = string | number | boolean | null | undefined;
 export type QueryMap = Record<string, QueryValue>;
@@ -23,6 +24,7 @@ export interface ViewerSettings {
   baseUrl: string;
   pollMs: number;
   reconnectMs: number;
+  dashboardFetchMode: DashboardFetchMode;
   viewerMode: ViewerMode;
   snapshotPollMs: number;
   httpFpsTarget: number;

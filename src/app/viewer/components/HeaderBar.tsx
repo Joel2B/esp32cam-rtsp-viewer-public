@@ -88,6 +88,27 @@ export function HeaderBar({
           />
         </div>
 
+        <div className={ui.field}>
+          <label className={ui.label} htmlFor="dashboard-fetch-mode">
+            data fetch
+          </label>
+          <select
+            id="dashboard-fetch-mode"
+            className={ui.select}
+            value={settings.dashboardFetchMode}
+            onChange={(event) =>
+              updateSetting(
+                "dashboardFetchMode",
+                event.target.value as ViewerSettings["dashboardFetchMode"],
+              )
+            }
+          >
+            <option value="on-connect">on-connect</option>
+            <option value="interval">interval</option>
+            <option value="off">off</option>
+          </select>
+        </div>
+
         <button
           className={cx(ui.button, ui.buttonPrimary)}
           onClick={onRefreshDashboard}

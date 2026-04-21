@@ -92,6 +92,12 @@ export function sanitizeSettings(candidate: Partial<ViewerSettings>): ViewerSett
     baseUrl: normalizeBaseUrl(candidate.baseUrl ?? DEFAULT_SETTINGS.baseUrl),
     pollMs: clampInt(candidate.pollMs ?? DEFAULT_SETTINGS.pollMs, 1000, 30000),
     reconnectMs: clampInt(candidate.reconnectMs ?? DEFAULT_SETTINGS.reconnectMs, 500, 60000),
+    dashboardFetchMode:
+      candidate.dashboardFetchMode === "on-connect" ||
+      candidate.dashboardFetchMode === "interval" ||
+      candidate.dashboardFetchMode === "off"
+        ? candidate.dashboardFetchMode
+        : DEFAULT_SETTINGS.dashboardFetchMode,
     viewerMode:
       candidate.viewerMode === "snapshot-poll" || candidate.viewerMode === "mjpeg"
         ? candidate.viewerMode

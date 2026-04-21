@@ -14,7 +14,7 @@ export const ui = {
   titleBlock: "flex flex-col justify-center gap-1",
   title: "text-[clamp(1.05rem,2.2vw,1.45rem)] font-[680] tracking-[0.02em] text-[#f2f5ff]",
   subtitle: "text-[0.87rem] text-[#a6afc4]",
-  topControls: "grid grid-cols-[1.6fr_repeat(4,minmax(86px,auto))] items-end gap-[10px] max-[1260px]:grid-cols-2 max-[900px]:grid-cols-1",
+  topControls: "grid grid-cols-[1.6fr_repeat(5,minmax(86px,auto))] items-end gap-[10px] max-[1260px]:grid-cols-2 max-[900px]:grid-cols-1",
   field: "min-w-0",
 
   label: "mb-[6px] block text-[0.75rem] uppercase tracking-[0.05em] text-[#a6afc4]",

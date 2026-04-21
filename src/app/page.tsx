@@ -40,7 +40,10 @@ export default function Home() {
   const [mjpegRetryNonce, setMjpegRetryNonce] = useState<number>(0);
   const [lastPollAt, setLastPollAt] = useState<number | null>(null);
   const refreshInFlightRef = useRef(false);
+  const hasFetchedOnConnectRef = useRef(false);
+  const isDashboardPollingOff = settings.dashboardFetchMode === "off";
   const offlineProbeTargets = useMemo(() => POLL_TARGETS.slice(0, 3), []);
+  const connectionProbeTargets = useMemo(() => [POLL_TARGETS[0]], []);
 
   const addLog = useCallback((action: string, status: number, message: string) => {
     const entry: LogEntry = {
@@ -53,7 +56,7 @@ export default function Home() {
     setLogEntries((prev) => [entry, ...prev].slice(0, 40));
   }, []);
 
-  const { hasValidBase, buildProxyUrl, buildDirectUrl, requestEndpoint } = useEspApi(
+  const { normalizedBase, hasValidBase, buildProxyUrl, buildDirectUrl, requestEndpoint } = useEspApi(
     settings.baseUrl,
     addLog,
   );
@@ -66,8 +69,31 @@ export default function Home() {
     };
   }, [manualSnapshotUrl]);
 
+  const applyPollResponses = useCallback(
+    (
+      responses: Array<readonly [DashboardKey, EndpointState]>,
+      mergeWithPrevious: boolean,
+    ): boolean => {
+      const next: Partial<Record<DashboardKey, EndpointState>> = {};
+      for (const [key, value] of responses) next[key] = value;
+
+      const allConnectionFailures = responses.every(([, value]) => isConnectionFailure(value));
+      const onlineNow = !allConnectionFailures;
+
+      setDashboard((prev) => (mergeWithPrevious ? { ...prev, ...next } : next));
+      setIsDeviceOnline(onlineNow);
+      if (!onlineNow) {
+        setIsQuickEcoActive(false);
+      }
+      setLastPollAt(Date.now());
+
+      return onlineNow;
+    },
+    [],
+  );
+
   const refreshDashboard = useCallback(async () => {
-    if (!hasValidBase || refreshInFlightRef.current) return;
+    if (!hasValidBase || refreshInFlightRef.current || isDashboardPollingOff) return;
 
     refreshInFlightRef.current = true;
     try {
@@ -85,29 +111,66 @@ export default function Home() {
         }),
       );
 
-      const next: Partial<Record<DashboardKey, EndpointState>> = {};
-      for (const [key, value] of responses) next[key] = value;
-
-      const allConnectionFailures = responses.every(([, value]) => isConnectionFailure(value));
-      const onlineNow = !allConnectionFailures;
-
-      setDashboard((prev) => (isDeviceOnline ? next : { ...prev, ...next }));
-      setIsDeviceOnline(onlineNow);
-      if (!onlineNow) {
-        setIsQuickEcoActive(false);
-      }
-      setLastPollAt(Date.now());
+      applyPollResponses(responses, !isDeviceOnline);
     } finally {
       refreshInFlightRef.current = false;
     }
-  }, [hasValidBase, isDeviceOnline, offlineProbeTargets, requestEndpoint, settings]);
+  }, [
+    applyPollResponses,
+    hasValidBase,
+    isDashboardPollingOff,
+    isDeviceOnline,
+    offlineProbeTargets,
+    requestEndpoint,
+    settings,
+  ]);
+
+  const probeConnection = useCallback(async () => {
+    if (!hasValidBase || refreshInFlightRef.current || isDashboardPollingOff) return;
+
+    refreshInFlightRef.current = true;
+    try {
+      const responses = await Promise.all(
+        connectionProbeTargets.map(async (target) => {
+          const query = target.query ? target.query(settings) : {};
+          const result = await requestEndpoint(target.path, query, {
+            silent: true,
+            timeoutMs: 7000,
+          });
+
+          return [target.key, result] as const;
+        }),
+      );
+
+      applyPollResponses(responses, true);
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  }, [
+    applyPollResponses,
+    connectionProbeTargets,
+    hasValidBase,
+    isDashboardPollingOff,
+    requestEndpoint,
+    settings,
+  ]);
 
   const dashboardPollMs = isDeviceOnline
     ? settings.pollMs
     : Math.max(settings.reconnectMs, 4000);
 
   useEffect(() => {
-    if (!hasValidBase) return;
+    hasFetchedOnConnectRef.current = false;
+    if (isDashboardPollingOff) {
+      setIsDeviceOnline(true);
+      return;
+    }
+
+    setIsDeviceOnline(false);
+  }, [isDashboardPollingOff, normalizedBase]);
+
+  useEffect(() => {
+    if (!hasValidBase || settings.dashboardFetchMode !== "interval") return;
 
     const kick = window.setTimeout(() => {
       void refreshDashboard();
@@ -121,25 +184,52 @@ export default function Home() {
       window.clearTimeout(kick);
       window.clearInterval(timer);
     };
-  }, [dashboardPollMs, hasValidBase, refreshDashboard]);
+  }, [dashboardPollMs, hasValidBase, refreshDashboard, settings.dashboardFetchMode]);
 
   useEffect(() => {
-    if (!hasValidBase || !isDeviceOnline || settings.viewerMode !== "snapshot-poll") return;
+    if (!hasValidBase || settings.dashboardFetchMode !== "on-connect") return;
+
+    const kick = window.setTimeout(() => {
+      void probeConnection();
+    }, 0);
+
+    const timer = window.setInterval(() => {
+      void probeConnection();
+    }, Math.max(settings.reconnectMs, 4000));
+
+    return () => {
+      window.clearTimeout(kick);
+      window.clearInterval(timer);
+    };
+  }, [hasValidBase, probeConnection, settings.dashboardFetchMode, settings.reconnectMs]);
+
+  useEffect(() => {
+    if (settings.dashboardFetchMode !== "on-connect" || !hasValidBase || !isDeviceOnline) return;
+    if (hasFetchedOnConnectRef.current) return;
+
+    hasFetchedOnConnectRef.current = true;
+    void refreshDashboard();
+  }, [hasValidBase, isDeviceOnline, refreshDashboard, settings.dashboardFetchMode]);
+
+  const effectiveDeviceOnline = isDashboardPollingOff ? true : isDeviceOnline;
+
+  useEffect(() => {
+    if (!hasValidBase || !effectiveDeviceOnline || settings.viewerMode !== "snapshot-poll") return;
 
     const timer = window.setInterval(() => {
       setSnapshotPollNonce(Date.now());
     }, settings.snapshotPollMs);
 
     return () => window.clearInterval(timer);
-  }, [hasValidBase, isDeviceOnline, settings.snapshotPollMs, settings.viewerMode]);
+  }, [effectiveDeviceOnline, hasValidBase, settings.snapshotPollMs, settings.viewerMode]);
 
   useEffect(() => {
-    if (!hasValidBase || !isDeviceOnline || settings.viewerMode !== "mjpeg") return;
+    if (!hasValidBase || !effectiveDeviceOnline || settings.viewerMode !== "mjpeg") return;
     const timer = window.setTimeout(() => {
       setMjpegRetryNonce(Date.now());
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [hasValidBase, isDeviceOnline, settings.viewerMode]);
+  }, [effectiveDeviceOnline, hasValidBase, settings.viewerMode]);
 
   const runAndInspect = useCallback(
     async (path: string, query: QueryMap = {}, actionLabel?: string) => {
@@ -264,9 +354,9 @@ export default function Home() {
     : "";
 
   const viewerSrc =
-    isDeviceOnline && settings.viewerMode === "snapshot-poll"
+    effectiveDeviceOnline && settings.viewerMode === "snapshot-poll"
       ? snapshotPollSrc
-      : isDeviceOnline
+      : effectiveDeviceOnline
         ? mjpegSrc
         : "";
 
@@ -286,7 +376,7 @@ export default function Home() {
           <ViewerCard
             settings={settings}
             hasValidBase={hasValidBase}
-            isDeviceOnline={isDeviceOnline}
+            isDeviceOnline={effectiveDeviceOnline}
             isQuickEcoActive={isQuickEcoActive}
             viewerSrc={viewerSrc}
             manualSnapshotUrl={manualSnapshotUrl}
