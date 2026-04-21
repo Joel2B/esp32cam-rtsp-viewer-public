@@ -43,6 +43,10 @@ export default function Home() {
   const refreshInFlightRef = useRef(false);
   const wasOnlineRef = useRef(false);
   const isDashboardPollingOff = settings.dashboardFetchMode === "off";
+  const dashboardPollTargets = useMemo(
+    () => POLL_TARGETS.filter((target) => target.key !== "autosleep"),
+    [],
+  );
 
   const addLog = useCallback((action: string, status: number, message: string) => {
     const entry: LogEntry = {
@@ -78,7 +82,13 @@ export default function Home() {
 
       const onlineNow = responses.some(([, value]) => value.ok && !isConnectionFailure(value));
 
-      setDashboard((prev) => (mergeWithPrevious ? { ...prev, ...next } : next));
+      setDashboard((prev) => {
+        const base = mergeWithPrevious ? { ...prev, ...next } : { ...next };
+        if (!("autosleep" in next) && prev.autosleep) {
+          base.autosleep = prev.autosleep;
+        }
+        return base;
+      });
       setIsDeviceOnline(onlineNow);
       if (!onlineNow) {
         setIsQuickEcoActive(false);
@@ -118,7 +128,7 @@ export default function Home() {
       }
 
       const responses = await Promise.all(
-        POLL_TARGETS.map(async (target) => {
+        dashboardPollTargets.map(async (target) => {
           const query = target.query ? target.query(settings) : {};
           const result = await requestEndpoint(target.path, query, {
             silent: true,
@@ -140,6 +150,7 @@ export default function Home() {
     isDeviceOnline,
     probeSnapshotOnline,
     requestEndpoint,
+    dashboardPollTargets,
     settings,
   ]);
 
@@ -188,6 +199,29 @@ export default function Home() {
       window.clearInterval(timer);
     };
   }, [dashboardPollMs, hasValidBase, refreshDashboard, settings.dashboardFetchMode]);
+
+  useEffect(() => {
+    if (!hasValidBase) return;
+
+    const pollMs = Math.max(250, settings.autosleepPollMs);
+    const run = async () => {
+      const result = await requestEndpoint("/autosleep", {}, { silent: true, timeoutMs: 5000 });
+      setDashboard((prev) => ({ ...prev, autosleep: result }));
+    };
+
+    const kick = window.setTimeout(() => {
+      void run();
+    }, 0);
+
+    const timer = window.setInterval(() => {
+      void run();
+    }, pollMs);
+
+    return () => {
+      window.clearTimeout(kick);
+      window.clearInterval(timer);
+    };
+  }, [hasValidBase, requestEndpoint, settings.autosleepPollMs]);
 
   useEffect(() => {
     if (!hasValidBase || settings.dashboardFetchMode !== "on-connect") return;

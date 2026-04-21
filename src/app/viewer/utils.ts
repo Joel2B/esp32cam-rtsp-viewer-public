@@ -92,6 +92,11 @@ export function sanitizeSettings(candidate: Partial<ViewerSettings>): ViewerSett
     baseUrl: normalizeBaseUrl(candidate.baseUrl ?? DEFAULT_SETTINGS.baseUrl),
     pollMs: clampInt(candidate.pollMs ?? DEFAULT_SETTINGS.pollMs, 1000, 30000),
     reconnectMs: clampInt(candidate.reconnectMs ?? DEFAULT_SETTINGS.reconnectMs, 500, 60000),
+    autosleepPollMs: clampInt(
+      candidate.autosleepPollMs ?? DEFAULT_SETTINGS.autosleepPollMs,
+      250,
+      10000,
+    ),
     dashboardFetchMode:
       candidate.dashboardFetchMode === "on-connect" ||
       candidate.dashboardFetchMode === "interval" ||
@@ -250,13 +255,6 @@ export function createApiCatalog(settings: ViewerSettings): CatalogItem[] {
       id: "wifi-sleep",
       path: "/wifi/sleep",
       description: "Wi-Fi power-save status",
-      options: "no parameters",
-      runMode: "fetch",
-    },
-    {
-      id: "ota-progress",
-      path: "/ota/progress",
-      description: "OTA progress",
       options: "no parameters",
       runMode: "fetch",
     },

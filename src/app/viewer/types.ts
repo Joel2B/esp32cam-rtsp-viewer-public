@@ -13,7 +13,6 @@ export type DashboardKey =
   | "httpFps"
   | "powerView"
   | "wifiSleep"
-  | "otaProgress"
   | "ina226"
   | "light"
   | "rcwl"
@@ -24,6 +23,7 @@ export interface ViewerSettings {
   baseUrl: string;
   pollMs: number;
   reconnectMs: number;
+  autosleepPollMs: number;
   dashboardFetchMode: DashboardFetchMode;
   viewerMode: ViewerMode;
   snapshotPollMs: number;

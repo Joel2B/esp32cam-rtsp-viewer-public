@@ -89,6 +89,26 @@ export function HeaderBar({
         </div>
 
         <div className={ui.field}>
+          <label className={ui.label} htmlFor="autosleep-poll-ms">
+            autosleep ms
+          </label>
+          <input
+            id="autosleep-poll-ms"
+            className={ui.input}
+            type="number"
+            min={250}
+            max={10000}
+            value={settings.autosleepPollMs}
+            onChange={(event) =>
+              updateSetting(
+                "autosleepPollMs",
+                clampInt(Number(event.target.value), 250, 10000),
+              )
+            }
+          />
+        </div>
+
+        <div className={ui.field}>
           <label className={ui.label} htmlFor="dashboard-fetch-mode">
             data fetch
           </label>

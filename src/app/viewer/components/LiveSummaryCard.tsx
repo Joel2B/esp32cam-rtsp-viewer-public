@@ -14,6 +14,12 @@ interface LiveSummaryCardProps {
   dashboard: Partial<Record<DashboardKey, EndpointState>>;
 }
 
+function formatMsAsSec(value: unknown): string {
+  const ms = asNumber(value);
+  if (ms === undefined) return "--";
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
   const cameraConfig = asRecord(dashboard.cameraConfig?.data);
   const rtspStats = asRecord(dashboard.rtspStats?.data);
@@ -22,7 +28,6 @@ export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
   const ram = asRecord(sysStats?.ram);
   const psram = asRecord(sysStats?.psram);
   const httpFps = asRecord(dashboard.httpFps?.data);
-  const otaProgress = asRecord(dashboard.otaProgress?.data);
   const ina = asRecord(dashboard.ina226?.data);
   const light = asRecord(dashboard.light?.data);
   const rcwl = asRecord(dashboard.rcwl?.data);
@@ -110,9 +115,28 @@ export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
         </div>
 
         <div className={ui.kv}>
-          <div className={ui.kvLabel}>OTA progress</div>
-          <div className={ui.kvValue}>{asNumber(otaProgress?.pct) ?? "--"}%</div>
+          <div className={ui.kvLabel}>Autosleep grace reason</div>
+          <div className={ui.kvValue}>{asString(autosleep?.grace_reason) ?? "--"}</div>
         </div>
+
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Autosleep grace flags</div>
+          <div className={ui.kvValue}>
+            g:{String(asBoolean(autosleep?.grace_active) ?? "--")} / g1:
+            {String(asBoolean(autosleep?.grace1_active) ?? "--")} / g2:
+            {String(asBoolean(autosleep?.grace2_active) ?? "--")}
+          </div>
+        </div>
+
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Autosleep remaining</div>
+          <div className={ui.kvValue}>
+            g:{formatMsAsSec(autosleep?.grace_remaining_ms)} / g1:
+            {formatMsAsSec(autosleep?.grace1_remaining_ms)} / g2:
+            {formatMsAsSec(autosleep?.grace2_remaining_ms)}
+          </div>
+        </div>
+
       </div>
     </article>
   );
