@@ -319,6 +319,30 @@ export default function Home() {
     }
   }, [runAndInspect]);
 
+  const runQuickAlwaysOn = useCallback(async () => {
+    const result = await runAndInspect(
+      "/autosleep",
+      { enable: 0 },
+      "/autosleep?enable=0",
+    );
+
+    if (result.ok) {
+      updateSetting("autosleepEnable", false);
+    }
+  }, [runAndInspect, updateSetting]);
+
+  const runQuickAutosleepNormal = useCallback(async () => {
+    const result = await runAndInspect(
+      "/autosleep",
+      { enable: 1 },
+      "/autosleep?enable=1",
+    );
+
+    if (result.ok) {
+      updateSetting("autosleepEnable", true);
+    }
+  }, [runAndInspect, updateSetting]);
+
   const takeSnapshot = useCallback(
     async (sendToTelegram: boolean) => {
       if (!hasValidBase) {
@@ -454,6 +478,8 @@ export default function Home() {
             onQuickEcoMode={runQuickEcoMode}
             onQuickNormalMode={runQuickNormalMode}
             onQuickSleep5m={runQuickSleep5m}
+            onQuickAlwaysOn={runQuickAlwaysOn}
+            onQuickAutosleepNormal={runQuickAutosleepNormal}
           />
 
           <ApiControlsCard

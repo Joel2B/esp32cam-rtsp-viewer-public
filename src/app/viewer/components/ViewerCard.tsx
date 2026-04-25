@@ -16,6 +16,8 @@ interface ViewerCardProps {
   onQuickEcoMode: () => Promise<void>;
   onQuickNormalMode: () => Promise<void>;
   onQuickSleep5m: () => Promise<void>;
+  onQuickAlwaysOn: () => Promise<void>;
+  onQuickAutosleepNormal: () => Promise<void>;
 }
 
 export function ViewerCard({
@@ -32,6 +34,8 @@ export function ViewerCard({
   onQuickEcoMode,
   onQuickNormalMode,
   onQuickSleep5m,
+  onQuickAlwaysOn,
+  onQuickAutosleepNormal,
 }: ViewerCardProps) {
   return (
     <article className={ui.card}>
@@ -114,6 +118,26 @@ export function ViewerCard({
                 Sleep 5 min
               </button>
             </div>
+            <div className={ui.quickActionRow}>
+              <button
+                type="button"
+                className={ui.button}
+                onClick={() => void onQuickAlwaysOn()}
+                disabled={!hasValidBase}
+              >
+                Autosleep Off
+              </button>
+            </div>
+            <div className={ui.quickActionRow}>
+              <button
+                type="button"
+                className={ui.button}
+                onClick={() => void onQuickAutosleepNormal()}
+                disabled={!hasValidBase}
+              >
+                Autosleep On
+              </button>
+            </div>
             <p className={ui.quickApi}>
               <code>/power/profile?mode=eco&wifi=max</code>
             </p>
@@ -122,6 +146,12 @@ export function ViewerCard({
             </p>
             <p className={ui.quickApi}>
               <code>/sleep?sec=300</code>
+            </p>
+            <p className={ui.quickApi}>
+              <code>/autosleep?enable=0</code>
+            </p>
+            <p className={ui.quickApi}>
+              <code>/autosleep?enable=1</code>
             </p>
           </aside>
         </div>
@@ -174,4 +204,5 @@ export function ViewerCard({
     </article>
   );
 }
+
 
