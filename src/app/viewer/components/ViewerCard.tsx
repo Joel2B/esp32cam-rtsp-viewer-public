@@ -14,31 +14,8 @@ interface ViewerCardProps {
   takeSnapshot: TakeSnapshot;
   openDirect: OpenDirect;
   onQuickEcoMode: () => Promise<void>;
-}
-
-function EcoStateIcon({ active }: { active: boolean }) {
-  if (active) {
-    return (
-      <svg viewBox="0 0 20 20" className={ui.quickStatusIcon} aria-hidden="true">
-        <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path
-          d="M6.3 10.2 8.7 12.5 13.8 7.6"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-        />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 20 20" className={ui.quickStatusIcon} aria-hidden="true">
-      <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-      <path d="M8 7.3v5.4M12 7.3v5.4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
-    </svg>
-  );
+  onQuickNormalMode: () => Promise<void>;
+  onQuickSleep5m: () => Promise<void>;
 }
 
 export function ViewerCard({
@@ -53,6 +30,8 @@ export function ViewerCard({
   takeSnapshot,
   openDirect,
   onQuickEcoMode,
+  onQuickNormalMode,
+  onQuickSleep5m,
 }: ViewerCardProps) {
   return (
     <article className={ui.card}>
@@ -112,17 +91,37 @@ export function ViewerCard({
                 onClick={() => void onQuickEcoMode()}
                 disabled={!hasValidBase}
               >
-                Power Saving (eco)
+                Power Saving ({isQuickEcoActive ? "Active" : "Inactive"})
               </button>
-              <span
-                className={cx(ui.quickStatus, isQuickEcoActive ? ui.quickStatusOn : ui.quickStatusOff)}
+            </div>
+            <div className={ui.quickActionRow}>
+              <button
+                type="button"
+                className={ui.button}
+                onClick={() => void onQuickNormalMode()}
+                disabled={!hasValidBase}
               >
-                <EcoStateIcon active={isQuickEcoActive} />
-                {isQuickEcoActive ? "Active" : "Inactive"}
-              </span>
+                Back to Normal
+              </button>
+            </div>
+            <div className={ui.quickActionRow}>
+              <button
+                type="button"
+                className={cx(ui.button, ui.buttonDanger)}
+                onClick={() => void onQuickSleep5m()}
+                disabled={!hasValidBase}
+              >
+                Sleep 5 min
+              </button>
             </div>
             <p className={ui.quickApi}>
               <code>/power/profile?mode=eco&wifi=max</code>
+            </p>
+            <p className={ui.quickApi}>
+              <code>/power/profile?mode=normal</code>
+            </p>
+            <p className={ui.quickApi}>
+              <code>/sleep?sec=300</code>
             </p>
           </aside>
         </div>
@@ -175,3 +174,4 @@ export function ViewerCard({
     </article>
   );
 }
+

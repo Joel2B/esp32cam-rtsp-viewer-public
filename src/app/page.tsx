@@ -294,6 +294,31 @@ export default function Home() {
     setIsQuickEcoActive(result.ok);
   }, [runAndInspect, updateSetting]);
 
+  const runQuickNormalMode = useCallback(async () => {
+    updateSetting("powerMode", "normal");
+    const result = await runAndInspect(
+      "/power/profile",
+      { mode: "normal" },
+      "/power/profile?mode=normal",
+    );
+    if (result.ok) {
+      setIsQuickEcoActive(false);
+    }
+  }, [runAndInspect, updateSetting]);
+
+  const runQuickSleep5m = useCallback(async () => {
+    const result = await runAndInspect(
+      "/sleep",
+      { sec: 300 },
+      "/sleep?sec=300",
+    );
+
+    if (result.ok) {
+      setIsDeviceOnline(false);
+      setIsQuickEcoActive(false);
+    }
+  }, [runAndInspect]);
+
   const takeSnapshot = useCallback(
     async (sendToTelegram: boolean) => {
       if (!hasValidBase) {
@@ -427,6 +452,8 @@ export default function Home() {
             takeSnapshot={takeSnapshot}
             openDirect={openDirect}
             onQuickEcoMode={runQuickEcoMode}
+            onQuickNormalMode={runQuickNormalMode}
+            onQuickSleep5m={runQuickSleep5m}
           />
 
           <ApiControlsCard
@@ -454,3 +481,4 @@ export default function Home() {
     </div>
   );
 }
+
