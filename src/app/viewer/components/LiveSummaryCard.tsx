@@ -32,6 +32,7 @@ export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
   const light = asRecord(dashboard.light?.data);
   const rcwl = asRecord(dashboard.rcwl?.data);
   const autosleep = asRecord(dashboard.autosleep?.data);
+  const frameDark = asRecord(dashboard.frameDark?.data);
 
   return (
     <article className={ui.card}>
@@ -102,6 +103,28 @@ export function LiveSummaryCard({ pollMs, dashboard }: LiveSummaryCardProps) {
           <div className={ui.kvValue}>
             {String(asBoolean(light?.dark) ?? "--")} / {String(asBoolean(light?.dark_frame) ?? "--")}
           </div>
+        </div>
+
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Frame dark guess</div>
+          <div className={ui.kvValue}>{String(asBoolean(frameDark?.is_dark_guess) ?? "--")}</div>
+        </div>
+
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Frame seq</div>
+          <div className={ui.kvValue}>{asNumber(frameDark?.frame_seq) ?? "--"}</div>
+        </div>
+
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Frame JPEG / threshold</div>
+          <div className={ui.kvValue}>
+            {asNumber(frameDark?.jpeg_bytes) ?? "--"} / {asNumber(frameDark?.dark_threshold_bytes) ?? "--"} bytes
+          </div>
+        </div>
+
+        <div className={ui.kv}>
+          <div className={ui.kvLabel}>Frame age</div>
+          <div className={ui.kvValue}>{formatMsAsSec(frameDark?.age_ms)}</div>
         </div>
 
         <div className={ui.kv}>
