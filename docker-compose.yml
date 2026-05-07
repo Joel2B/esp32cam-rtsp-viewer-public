@@ -1,0 +1,10 @@
+services:
+  viewer:
+    container_name: esp32cam-rtsp-viewer
+    image: esp32cam-rtsp-viewer:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    restart: unless-stopped
