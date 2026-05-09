@@ -6,6 +6,7 @@ interface ViewerCardProps {
   settings: ViewerSettings;
   hasValidBase: boolean;
   isDeviceOnline: boolean;
+  isViewerPaused: boolean;
   isQuickEcoActive: boolean;
   viewerSrc: string;
   manualSnapshotUrl: string;
@@ -24,6 +25,7 @@ export function ViewerCard({
   settings,
   hasValidBase,
   isDeviceOnline,
+  isViewerPaused,
   isQuickEcoActive,
   viewerSrc,
   manualSnapshotUrl,
@@ -51,6 +53,9 @@ export function ViewerCard({
           <span className={cx(ui.pill, isDeviceOnline ? ui.pillOk : ui.pillErr)}>
             {isDeviceOnline ? "camera online" : "camera offline (light retry mode)"}
           </span>
+          <span className={cx(ui.pill, isViewerPaused ? ui.pillErr : ui.pillOk)}>
+            {isViewerPaused ? "viewer paused (inactive tab)" : "viewer active"}
+          </span>
           <span className={ui.pill}>last poll: {formatTime(lastPollAt)}</span>
         </div>
       </div>
@@ -75,7 +80,11 @@ export function ViewerCard({
       {hasValidBase ? (
         <div className={ui.viewerLayout}>
           <div className={ui.viewerStage}>
-            {isDeviceOnline && viewerSrc ? (
+            {isViewerPaused ? (
+              <div className={ui.viewerEmpty}>
+                Viewer paused because this tab is not active.
+              </div>
+            ) : isDeviceOnline && viewerSrc ? (
               <img src={viewerSrc} alt="camera stream" className={ui.viewerMedia} />
             ) : (
               <div className={ui.viewerEmpty}>

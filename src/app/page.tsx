@@ -40,6 +40,7 @@ export default function Home() {
   const [snapshotPollNonce, setSnapshotPollNonce] = useState<number>(0);
   const [mjpegRetryNonce, setMjpegRetryNonce] = useState<number>(0);
   const [lastPollAt, setLastPollAt] = useState<number | null>(null);
+  const [isTabVisible, setIsTabVisible] = useState(true);
   const refreshInFlightRef = useRef(false);
   const wasOnlineRef = useRef(false);
   const isDashboardPollingOff = settings.dashboardFetchMode === "off";
@@ -63,6 +64,16 @@ export default function Home() {
     settings.baseUrl,
     addLog,
   );
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      setIsTabVisible(document.visibilityState === "visible");
+    };
+
+    onVisibilityChange();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -254,24 +265,34 @@ export default function Home() {
   }, [hasValidBase, isDeviceOnline, refreshDashboard, settings.dashboardFetchMode]);
 
   const effectiveDeviceOnline = isDashboardPollingOff ? true : isDeviceOnline;
+  const isViewerActive = hasValidBase && effectiveDeviceOnline && isTabVisible;
 
   useEffect(() => {
-    if (!hasValidBase || !effectiveDeviceOnline || settings.viewerMode !== "snapshot-poll") return;
+    if (!isViewerActive || settings.viewerMode !== "snapshot-poll") return;
 
     const timer = window.setInterval(() => {
       setSnapshotPollNonce(Date.now());
     }, settings.snapshotPollMs);
 
     return () => window.clearInterval(timer);
-  }, [effectiveDeviceOnline, hasValidBase, settings.snapshotPollMs, settings.viewerMode]);
+  }, [isViewerActive, settings.snapshotPollMs, settings.viewerMode]);
 
   useEffect(() => {
-    if (!hasValidBase || !effectiveDeviceOnline || settings.viewerMode !== "mjpeg") return;
-    const timer = window.setTimeout(() => {
+    if (!isViewerActive || settings.viewerMode !== "mjpeg") return;
+
+    const kick = window.setTimeout(() => {
       setMjpegRetryNonce(Date.now());
     }, 0);
-    return () => window.clearTimeout(timer);
-  }, [effectiveDeviceOnline, hasValidBase, settings.viewerMode]);
+
+    const timer = window.setInterval(() => {
+      setMjpegRetryNonce(Date.now());
+    }, settings.snapshotPollMs);
+
+    return () => {
+      window.clearTimeout(kick);
+      window.clearInterval(timer);
+    };
+  }, [isViewerActive, settings.snapshotPollMs, settings.viewerMode]);
 
   const runAndInspect = useCallback(
     async (path: string, query: QueryMap = {}, actionLabel?: string) => {
@@ -445,11 +466,13 @@ export default function Home() {
     : "";
 
   const viewerSrc =
-    effectiveDeviceOnline && settings.viewerMode === "snapshot-poll"
-      ? snapshotPollSrc
-      : effectiveDeviceOnline
-        ? mjpegSrc
-        : "";
+    !isTabVisible
+      ? ""
+      : effectiveDeviceOnline && settings.viewerMode === "snapshot-poll"
+        ? snapshotPollSrc
+        : effectiveDeviceOnline
+          ? mjpegSrc
+          : "";
 
   return (
     <div className={ui.shell}>
@@ -468,6 +491,7 @@ export default function Home() {
             settings={settings}
             hasValidBase={hasValidBase}
             isDeviceOnline={effectiveDeviceOnline}
+            isViewerPaused={!isTabVisible}
             isQuickEcoActive={isQuickEcoActive}
             viewerSrc={viewerSrc}
             manualSnapshotUrl={manualSnapshotUrl}
